@@ -29,9 +29,19 @@ def save_fig(fig_id, tight_layout=True, fig_extension="png", resolution=300):
 # ========================== MAIN SCRIPT ============================
 # --- Reading the data
 
-df_15luz = pd.read_csv('C:\\UTEC\\10 ciclo\\Ingeniería Sismoresistente\\proyecto\\Data\\Ace_1.5luz.csv')
-df_125luz = pd.read_csv('C:\\UTEC\\10 ciclo\\Ingeniería Sismoresistente\\proyecto\\Data\\Ace_1.25luz.csv')
-df_175luz = pd.read_csv('C:\\UTEC\\10 ciclo\\Ingeniería Sismoresistente\\proyecto\\Data\\Ace_1.75luz.csv')
+fpath = '.\\Data\\'
+
+fname1 = 'Ace_1.5luz.csv'  # 'main_PC_database.xlsx', 'main_PC_database_v2.xlsx'   # <-------
+fname_t1 = fpath + fname1
+fname2 = 'Ace_1.25luz.csv'  # 'main_PC_database.xlsx', 'main_PC_database_v2.xlsx'   # <-------
+fname_t2 = fpath + fname2
+fname3 = 'Ace_1.75luz.csv'  # 'main_PC_database.xlsx', 'main_PC_database_v2.xlsx'   # <-------
+fname_t3 = fpath + fname3
+#
+# --- Reading the data
+df_15luz = pd.read_csv(fname_t1)
+df_125luz = pd.read_csv(fname_t2)
+df_175luz = pd.read_csv(fname_t3)
 # --- Initial look of the data
 print(df_15luz.head(20))
 print(df_15luz.info())  # data types and general info

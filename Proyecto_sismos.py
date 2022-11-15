@@ -232,7 +232,6 @@ plt.xlabel('Time (s)')
 #plt.ylim([-1, 1])
 save_fig("CAV")
 
-
 i=6000
 ancho=data_mid['Time (s)'][i+1]-data_mid['Time (s)'][i]
 Acel=np.abs(data_mid['Linear Acceleration z (m/s^2)'][i])

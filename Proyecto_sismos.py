@@ -52,188 +52,212 @@ data_mid = df_15luz.copy()
 data_left = df_125luz.copy()
 data_right = df_175luz.copy()
 
-#===== Ploteando data
+import eqsig.single
+bf, sub_fig = plt.subplots()
+a = data_mid['Linear Acceleration z (m/s^2)']
+dt = 0.005  # time step of acceleration time series
+periods = np.linspace(0.2, 5, 100)  # compute the response for 100 periods between T=0.2s and 5.0s
+record = eqsig.AccSignal(a * 9.8, dt)
+record.generate_response_spectrum(response_times=periods)
+times = record.response_times
+sub_fig.plot(times, record.s_a, label="eqsig")
+save_fig('Data_mid')
+
+bf, sub_fig = plt.subplots()
+a = data_left['Linear Acceleration z (m/s^2)']
+dt = 0.005  # time step of acceleration time series
+periods = np.linspace(0.2, 5, 100)  # compute the response for 100 periods between T=0.2s and 5.0s
+record = eqsig.AccSignal(a * 9.8, dt)
+record.generate_response_spectrum(response_times=periods)
+times = record.response_times
+sub_fig.plot(times, record.s_a, label="eqsig")
+save_fig('Data_left')
+
+bf, sub_fig = plt.subplots()
+a = data_right['Linear Acceleration z (m/s^2)']
+dt = 0.005  # time step of acceleration time series
+periods = np.linspace(0.2, 5, 100)  # compute the response for 100 periods between T=0.2s and 5.0s
+record = eqsig.AccSignal(a * 9.8, dt)
+record.generate_response_spectrum(response_times=periods)
+times = record.response_times
+sub_fig.plot(times, record.s_a, label="eqsig")
+save_fig('Data_right')
+
+#========== Produce Fourier spectrum and smoothed Fourier spectrum (https://github.com/eng-tools/eqsig/blob/master/examples/example_filtering_and_fourier_spectrum.ipynb)
 plt.figure(figsize=(15,8))
-plt.plot(data_right['Time (s)'], data_right['Linear Acceleration z (m/s^2)'],linewidth=0.7)
-plt.xlabel('Time (s)')
-plt.ylabel('Linear Acceleration Z (m/s^2)')
-plt.xlim([60, 600]) # 60 es a 1 min del inicio y 600 es a 10 min
-plt.ylim([-0.6, 0.1])
-save_fig("Linear Acceleration Z_right_total")
+acc = data_mid['Linear Acceleration z (m/s^2)']
+dt = 0.01
+asig = eqsig.AccSignal(acc, dt, label='name_of_record')
+plt.plot(asig.fa_frequencies, abs(asig.fa_spectrum), c='b')
+asig.smooth_fa_frequencies = np.logspace(-1, 1, 50)
+plt.loglog(asig.smooth_fa_frequencies, asig.smooth_fa_spectrum, c='r', ls='--')
+plt.xlabel('Frequency [Hz]')
+lab = plt.ylabel('Fourier Amplitude [m/s]')
+save_fig('Fourier_spectrum_DataMid')
 
-np.max(data_mid['Linear Acceleration y (m/s^2)'])
+##=====Filter record using  filter
 plt.figure(figsize=(15,8))
-plt.plot(data_right['Time (s)'], data_right['Linear Acceleration z (m/s^2)'],linewidth=0.7)
-plt.xlabel('Time (s)')
-plt.ylabel('Linear Acceleration Z (m/s^2)')
-plt.xlim([60, 80]) # 60 es a 1 min del inicio y 600 es a 10 min
-plt.ylim([-0.5, 0])
-save_fig("Linear Acceleration Z_right_incial")
+plt.plot(asig.fa_frequencies, abs(asig.fa_spectrum), c='b')
+asig.butter_pass((None, 8))  # Low pass filter at 8Hz (default 4th order)
+plt.plot(asig.fa_frequencies, abs(asig.fa_spectrum), c='r', ls='--')
+asig.butter_pass((0.1, None), filter_order=4)  # High pass filter at 0.1Hz (default 4th order)
+plt.plot(asig.fa_frequencies, abs(asig.fa_spectrum), c='g', ls=':')
+asig.butter_pass((0.2, 6))  # Band pass filter at 0.2 and 6Hz (default 4th order)
+plt.loglog(asig.fa_frequencies, abs(asig.fa_spectrum), c='k', ls='--', lw=0.7)
+plt.xlabel('Frequency [Hz]')
+lab = plt.ylabel('Fourier Amplitude [m/s]')
+save_fig('Butterworth_DataMid')
 
-np.max(data_mid['Linear Acceleration z (m/s^2)'])
+#===== Detrend a record
 plt.figure(figsize=(15,8))
-plt.plot(data_right['Time (s)'], data_right['Linear Acceleration z (m/s^2)'],linewidth=0.7)
-plt.xlabel('Time (s)')
-plt.ylabel('Linear Acceleration Z_inicial (m/s^2)')
-plt.xlim([345, 365]) # 60 es a 1 min del inicio y 600 es a 10 min
-plt.ylim([-0.45, -0.05])
-save_fig("Linear Acceleration Z_right_midtime")
+bf, sps = plt.subplots(nrows=3, sharex='col')
+acc = data_mid['Linear Acceleration z (m/s^2)']
+asig = eqsig.AccSignal(acc, dt, label='name_of_record')
+asig.remove_poly(poly_fit=1)  # Remove any trend
+sps[0].plot(asig.time, asig.values, label='Original')
+sps[1].plot(asig.time, asig.velocity)
+sps[2].plot(asig.time, asig.displacement)
 
+# Add a trend
+asig.add_series(np.linspace(0, 0.1, asig.npts))
+sps[0].plot(asig.time, asig.values, ls='--', label='with trend')
+sps[1].plot(asig.time, asig.velocity, ls='--')
+sps[2].plot(asig.time, asig.displacement, ls='--')
 
-plt.figure(figsize=(15,8))
-plt.plot(data_right['Time (s)'], data_right['Linear Acceleration z (m/s^2)'],linewidth=0.7)
-plt.xlabel('Time (s)')
-plt.ylabel('Linear Acceleration Z (m/s^2)')
-plt.xlim([580, 600]) # 60 es a 1 min del inicio y 600 es a 10 min
-plt.ylim([-0.5, 0])
-save_fig("Linear Acceleration Z_right_final")
+# remove the trend
+asig.remove_poly(poly_fit=1)
+sps[0].plot(asig.time, asig.values, ls=':', label='trend removed')
+sps[1].plot(asig.time, asig.velocity, ls=':')
+sps[2].plot(asig.time, asig.displacement, ls=':')
+sps[0].set_ylabel('Accel. [$m/s^2$]')
+sps[1].set_ylabel('Velo. [$m/s$]')
+sps[2].set_ylabel('Disp. [$m$]')
+sps[-1].set_xlabel('Time [s]')
+sps[0].legend(prop={'size': 6}, ncol=3)
+save_fig('Detrend_DataMid')
 
+#=================== Calculate SDOF response spectra (https://github.com/eng-tools/eqsig/blob/master/examples/example_response_spectra.ipynb)
 
-Fs = 150.0;                 # tasa de muestreo
-Ts = 1.0/Fs;                # intervalo de muestreo Intervalo de muestreo
-t = np.arange(0,1,Ts)       # vector de tiempo, aquí Ts también es el tamaño del paso
+acc = data_mid['Linear Acceleration z (m/s^2)']
+dt = 0.01
 
-ff = 25;                    # frecuencia de la señal
-y = np.sin(2*np.pi*ff*t)
+periods = np.linspace(0.01, 5, 40)
+spectral_disp, spectral_velo, spectral_acc = eqsig.sdof.pseudo_response_spectra(acc, dt, periods, xi=0.05)
 
-n = len(y)                  # length of the signal
-k = np.arange(n)
-T = n/Fs
-frq = k/T                   # two sides frequency range
-frq1 = frq[range(int(n/2))] # one side frequency range
+bf, sps = plt.subplots(nrows=3, figsize=(6, 6))
 
-YY = np.fft.fft(y)          # Sin normalizar
-Y = np.fft.fft(y)/n         # normalización de normalización y computación fft
-Y1 = Y[range(int(n/2))]
+sps[0].plot(periods, spectral_acc / 9.8)
+sps[1].plot(periods, spectral_velo)
+sps[2].plot(periods, spectral_disp)
 
-fig, ax = plt.subplots(4, 1)
+sps[0].set_ylabel('$S_a$ [g]')
+sps[1].set_ylabel('$S_v$ [m/s]')
+sps[2].set_ylabel('$S_d$ [m]')
+sps[2].set_xlabel('Period [s]')
+save_fig('SDOF_DataMid')
 
-ax[0].plot(t,y)
-ax[0].set_xlabel('Time')
-ax[0].set_ylabel('Amplitude')
+#
+acc = data_left['Linear Acceleration z (m/s^2)']
+dt = 0.01
 
-ax[1].plot(frq,abs(YY),'r') # plotting the spectrum
-ax[1].set_xlabel('Freq (Hz)')
-ax[1].set_ylabel('|Y(freq)|')
+periods = np.linspace(0.01, 5, 40)
+spectral_disp, spectral_velo, spectral_acc = eqsig.sdof.pseudo_response_spectra(acc, dt, periods, xi=0.05)
 
-ax[2].plot(frq,abs(Y),'G')  # plotting the spectrum
-ax[2].set_xlabel('Freq (Hz)')
-ax[2].set_ylabel('|Y(freq)|')
+bf, sps = plt.subplots(nrows=3, figsize=(6, 6))
+sps[0].plot(periods, spectral_acc / 9.8)
+sps[1].plot(periods, spectral_velo)
+sps[2].plot(periods, spectral_disp)
 
-ax[3].plot(frq1,abs(Y1),'B') # plotting the spectrum
-ax[3].set_xlabel('Freq (Hz)')
-ax[3].set_ylabel('|Y(freq)|')
+sps[0].set_ylabel('$S_a$ [g]')
+sps[1].set_ylabel('$S_v$ [m/s]')
+sps[2].set_ylabel('$S_d$ [m]')
+sps[2].set_xlabel('Period [s]')
+save_fig('SDOF_DataLeft')
 
-plt.show()
+#
+acc = data_right['Linear Acceleration z (m/s^2)']
+dt = 0.01
 
-data_mid1=data_mid[,]
+periods = np.linspace(0.01, 5, 40)
+spectral_disp, spectral_velo, spectral_acc = eqsig.sdof.pseudo_response_spectra(acc, dt, periods, xi=0.05)
 
-data_mid['Linear Acceleration z (m/s^2)'].shape[0]
+bf, sps = plt.subplots(nrows=3, figsize=(6, 6))
 
-def get_circular_terms(N):
-    """
-    N: int 
-    """
+sps[0].plot(periods, spectral_acc / 9.8)
+sps[1].plot(periods, spectral_velo)
+sps[2].plot(periods, spectral_disp)
 
-    terms =  np.exp(-1j *2*np.pi * np.arange(N)/N)
+sps[0].set_ylabel('$S_a$ [g]')
+sps[1].set_ylabel('$S_v$ [m/s]')
+sps[2].set_ylabel('$S_d$ [m]')
+sps[2].set_xlabel('Period [s]')
+save_fig('SDOF_DataRight')
 
-    return terms
+#==============0000Elastic response time series
+periods = np.array([0.5, 2.0])
+acc = data_mid['Linear Acceleration z (m/s^2)']
+dt = 0.01
+response_disp, response_velo, response_accel = eqsig.sdof.response_series(acc, dt, periods, xi=0.05)
 
-def discrete_fourier_transform(data):
+time = np.arange(0, len(acc)) * dt
 
-    N=data.shape[0]
-    n=np.arange(N)
-    k=n.reshape((N,1))
-    M=np.exp(-1j*2*np.pi*k*n/N)
-    
-    return np.dot(M,data)
+bf, sps = plt.subplots(nrows=3, figsize=(6, 6))
+sps[0].plot(time, response_accel[0] / 9.8, label='T=%.2fs' % periods[0])
+sps[1].plot(time, response_velo[0])
+sps[2].plot(time, response_disp[0])
+sps[0].plot(time, response_accel[1] / 9.8, label='T=%.2fs' % periods[1])
+sps[1].plot(time, response_velo[1])
+sps[2].plot(time, response_disp[1])
 
-def fast_fourier_transform(data):
-    """
-    data: np.array  
-        data as 1D array
-    return discrete fourier transform of data
-    """
+sps[0].set_ylabel('Resp. Accel. [g]')
+sps[1].set_ylabel('Resp. Velo [m/s]')
+sps[2].set_ylabel('Resp Disp [m]')
+sps[2].set_xlabel('Time [s]')
+sps[0].legend()
+save_fig('ElasticResponse_DataMid')
 
-    # len of data
-    N = data.shape[0]
+##
+periods = np.array([0.5, 2.0])
+acc = data_left['Linear Acceleration z (m/s^2)']
+dt = 0.01
+response_disp, response_velo, response_accel = eqsig.sdof.response_series(acc, dt, periods, xi=0.05)
 
-    # Must be a power of 2
-    assert   N % 2 == 0, 'len of data: {} must be a power of 2'.format(N)
+time = np.arange(0, len(acc)) * dt
 
-    if N<= 2:
-        return discrete_fourier_transform(data)
+bf, sps = plt.subplots(nrows=3, figsize=(6, 6))
+sps[0].plot(time, response_accel[0] / 9.8, label='T=%.2fs' % periods[0])
+sps[1].plot(time, response_velo[0])
+sps[2].plot(time, response_disp[0])
+sps[0].plot(time, response_accel[1] / 9.8, label='T=%.2fs' % periods[1])
+sps[1].plot(time, response_velo[1])
+sps[2].plot(time, response_disp[1])
 
-    else:
-        data_even = fast_fourier_transform(data[::2])
-        data_odd = fast_fourier_transform(data[1::2])
-        terms = get_circular_terms(N)
+sps[0].set_ylabel('Resp. Accel. [g]')
+sps[1].set_ylabel('Resp. Velo [m/s]')
+sps[2].set_ylabel('Resp Disp [m]')
+sps[2].set_xlabel('Time [s]')
+sps[0].legend()
+save_fig('ElasticResponse_DataLeft')
 
-        return np.concatenate(
-            [
-            data_even + terms[:N//2] * data_odd,
-            data_even + terms[N//2:] * data_odd 
-            ])
+##
+periods = np.array([0.5, 2.0])
+acc = data_right['Linear Acceleration z (m/s^2)'][1000:3000] #total:127004
+dt = 0.01
+response_disp, response_velo, response_accel = eqsig.sdof.response_series(acc, dt, periods, xi=0.05)
 
+time = np.arange(0, len(acc)) * dt
 
-M_dot=discrete_fourier_transform(data_mid['Linear Acceleration z (m/s^2)'][60:92])
-Z_dot=fast_fourier_transform(data_mid['Absolute acceleration (m/s^2)'][60:92])
+bf, sps = plt.subplots(nrows=3, figsize=(6, 6))
+sps[0].plot(time, response_accel[0] / 9.8, label='T=%.2fs' % periods[0])
+sps[1].plot(time, response_velo[0])
+sps[2].plot(time, response_disp[0])
+sps[0].plot(time, response_accel[1] / 9.8, label='T=%.2fs' % periods[1])
+sps[1].plot(time, response_velo[1])
+sps[2].plot(time, response_disp[1])
 
-plt.figure(figsize=(15,8))
-plt.plot(data_mid['Time (s)'][60:92], M_dot,linewidth=0.7)
-plt.xlabel('Time (s)')
-plt.ylabel('Absolute acceleration (m/s^2)')
-#plt.xlim([60, 600]) # 60 es a 1 min del inicio y 600 es a 10 min
-plt.ylim([-0.1, 0.1])
-save_fig("Fourier Abs")
-
-import scipy.fftpack as fourier
-
-
-intervalo=(np.max(data_mid['Time (s)'])-np.min(data_mid['Time (s)']))/len(data_mid['Time (s)'])
-
-Ts=data_mid['Time (s)'][65] - data_mid['Time (s)'][64] #Tiempo entre muestreo
-Fs=1/Ts 
-print(Ts)
-print(Fs)
-# TRANFORMADA RAPIDA DE FOURIER
-f = np.fft.fft(data_left['Linear Acceleration z (m/s^2)'][60:60000])
-freq = np.fft.fftfreq(len(data_mid['Linear Acceleration z (m/s^2)'][60:92]), d = data_mid['Time (s)'][61] - data_mid['Time (s)'][60])
-
-np.min(f)
-np.max(f)
-np.mean(f)
-np.std(f)
-
-plt.figure(figsize=(15,8))
-plt.plot(data_left['Time (s)'][60:60000], f,linewidth=0.7)
-#plt.plot(data_mid['Time (s)'][60:92], freq,linewidth=0.7,color='red')
-plt.xlabel('Time (s)')
-#plt.ylabel('Absolute acceleration (m/s^2)')
-#plt.xlim([60, 300]) # 60 es a 1 min del inicio y 600 es a 10 min
-plt.ylim([-1, 1])
-save_fig("Fourier left_total_60000")
-
-
-area_acum=[]
-for i in range(60,600):
-    ancho=data_mid['Time (s)'][i+1]-data_mid['Time (s)'][i]
-    Acel=np.abs(data_mid['Linear Acceleration z (m/s^2)'][i])
-    area=ancho*Acel
-    area_acum.append(area)
-
-
-plt.figure(figsize=(15,8))
-plt.scatter(data_mid['Time (s)'][60:600], area_acum,linewidth=0.7)
-#plt.plot(data_mid['Time (s)'][60:92], freq,linewidth=0.7,color='red')
-plt.xlabel('Time (s)')
-#plt.ylabel('Absolute acceleration (m/s^2)')
-#plt.xlim([60, 300]) # 60 es a 1 min del inicio y 600 es a 10 min
-#plt.ylim([-1, 1])
-save_fig("CAV")
-
-i=6000
-ancho=data_mid['Time (s)'][i+1]-data_mid['Time (s)'][i]
-Acel=np.abs(data_mid['Linear Acceleration z (m/s^2)'][i])
-area=ancho*Acel
-area_acum.append(area)
+sps[0].set_ylabel('Resp. Accel. [g]')
+sps[1].set_ylabel('Resp. Velo [m/s]')
+sps[2].set_ylabel('Resp Disp [m]')
+sps[2].set_xlabel('Time [s]')
+sps[0].legend()
+save_fig('ElasticResponse_DataRight')

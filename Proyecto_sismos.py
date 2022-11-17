@@ -31,17 +31,32 @@ def save_fig(fig_id, tight_layout=True, fig_extension="png", resolution=300):
 
 fpath = '.\\Data\\'
 
-fname1 = 'Ace_1.5luz.csv'  # 'main_PC_database.xlsx', 'main_PC_database_v2.xlsx'   # <-------
+#Puente nuevo
+fname1 = 'Ace_1.5luz.csv'  # '
 fname_t1 = fpath + fname1
-fname2 = 'Ace_1.25luz.csv'  # 'main_PC_database.xlsx', 'main_PC_database_v2.xlsx'   # <-------
+fname2 = 'Ace_1.25luz.csv'  # 
 fname_t2 = fpath + fname2
-fname3 = 'Ace_1.75luz.csv'  # 'main_PC_database.xlsx', 'main_PC_database_v2.xlsx'   # <-------
+fname3 = 'Ace_1.75luz.csv'  # 
 fname_t3 = fpath + fname3
 #
+
+#Puente viejo
+fname4 = 'Ace_1.5luz_viejo.csv'  # '
+fname_t4 = fpath + fname4
+fname5 = 'Ace_1.25luz_viejo.csv'  # 
+fname_t5 = fpath + fname5
+fname6 = 'Ace_1.75luz_viejo.csv'  # 
+fname_t6 = fpath + fname6
+
 # --- Reading the data
 df_15luz = pd.read_csv(fname_t1)
 df_125luz = pd.read_csv(fname_t2)
 df_175luz = pd.read_csv(fname_t3)
+
+df_15luz_viejo = pd.read_csv(fname_t4)
+df_125luz_viejo = pd.read_csv(fname_t5)
+df_175luz_viejo = pd.read_csv(fname_t6)
+
 # --- Initial look of the data
 print(df_15luz.head(20))
 print(df_15luz.info())  # data types and general info
@@ -51,6 +66,10 @@ print(df_15luz.info())  # data types and general info
 data_mid = df_15luz.copy()
 data_left = df_125luz.copy()
 data_right = df_175luz.copy()
+
+data_mid_viejo = df_15luz_viejo.copy()
+data_left_viejo = df_125luz_viejo.copy()
+data_right_viejo = df_175luz_viejo.copy()
 
 import eqsig.single
 bf, sub_fig = plt.subplots()

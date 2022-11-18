@@ -74,7 +74,7 @@ data_right_viejo = df_175luz_viejo.copy()
 import eqsig.single
 bf, sub_fig = plt.subplots()
 a = data_mid['Linear Acceleration z (m/s^2)'][12000:60000] #min 2 a min 10
-dt = 0.005  # time step of acceleration time series
+dt = 0.01  # time step of acceleration time series
 periods = np.linspace(0.2, 5, 100)  # compute the response for 100 periods between T=0.2s and 5.0s
 record = eqsig.AccSignal(a * 9.8, dt)
 record.generate_response_spectrum(response_times=periods)
@@ -84,7 +84,7 @@ save_fig('Data_mid')
 
 bf, sub_fig = plt.subplots()
 a = data_left['Linear Acceleration z (m/s^2)'][12000:60000] #min 2 a min 10
-dt = 0.005  # time step of acceleration time series
+dt = 0.01  # time step of acceleration time series
 periods = np.linspace(0.2, 5, 100)  # compute the response for 100 periods between T=0.2s and 5.0s
 record = eqsig.AccSignal(a * 9.8, dt)
 record.generate_response_spectrum(response_times=periods)
@@ -94,7 +94,7 @@ save_fig('Data_left')
 
 bf, sub_fig = plt.subplots()
 a = data_right['Linear Acceleration z (m/s^2)'][12000:60000] #min 2 a min 10
-dt = 0.005  # time step of acceleration time series
+dt = 0.01  # time step of acceleration time series
 periods = np.linspace(0.2, 5, 100)  # compute the response for 100 periods between T=0.2s and 5.0s
 record = eqsig.AccSignal(a * 9.8, dt)
 record.generate_response_spectrum(response_times=periods)
@@ -602,3 +602,66 @@ sps[2].set_ylabel('Resp Disp [m]')
 sps[2].set_xlabel('Time [s]')
 sps[0].legend()
 save_fig('ElasticResponse_DataRight_viejo')
+
+
+
+
+
+#======================= FFT
+
+# Python example - Fourier transform using numpy.fft method
+import numpy as np
+import matplotlib.pyplot as plotter
+
+# How many time points are needed i,e., Sampling Frequency
+samplingFrequency   = 100;
+# At what intervals time points are sampled
+samplingInterval       = 1 / samplingFrequency;
+# Begin time period of the signals
+beginTime           = 0;
+# End time period of the signals
+endTime             = 10; 
+# Frequency of the signals
+signal1Frequency     = 4;
+signal2Frequency     = 7;
+# Time points
+time        = np.arange(beginTime, endTime, samplingInterval);
+# Create two sine waves
+amplitude1 = np.sin(2*np.pi*signal1Frequency*time)
+amplitude2 = np.sin(2*np.pi*signal2Frequency*time)
+# Create subplot
+figure, axis = plotter.subplots(4, 1)
+plotter.subplots_adjust(hspace=1)
+# Time domain representation for sine wave 1
+axis[0].set_title('Sine wave with a frequency of 4 Hz')
+axis[0].plot(time, amplitude1)
+axis[0].set_xlabel('Time')
+axis[0].set_ylabel('Amplitude')
+ # Time domain representation for sine wave 2
+axis[1].set_title('Sine wave with a frequency of 7 Hz')
+axis[1].plot(time, amplitude2)
+axis[1].set_xlabel('Time')
+axis[1].set_ylabel('Amplitude')
+# Add the sine waves
+amplitude = amplitude1 + amplitude2
+# Time domain representation of the resultant sine wave
+axis[2].set_title('Sine wave with multiple frequencies')
+axis[2].plot(time, amplitude)
+axis[2].set_xlabel('Time')
+axis[2].set_ylabel('Amplitude')
+
+# Frequency domain representation
+fourierTransform = np.fft.fft(data_right_viejo['Linear Acceleration z (m/s^2)'][12000:60000])/len(data_right_viejo['Linear Acceleration z (m/s^2)'][12000:60000])           # Normalize amplitude
+fourierTransform = fourierTransform[range(int(len(data_right_viejo['Linear Acceleration z (m/s^2)'][12000:60000])/2))] # Exclude sampling frequency
+
+tpCount     = len(data_right_viejo['Linear Acceleration z (m/s^2)'][12000:60000])
+values      = np.arange(int(tpCount/2))
+timePeriod  = tpCount/0.01
+frequencies = values/timePeriod
+
+# Frequency domain representation
+plt.set_title('Fourier transform depicting the frequency components')
+plt.plot(frequencies, abs(fourierTransform))
+plt.xlabel('Frequency')
+plt.ylabel('Acceleration')
+save_fig('FFT_right_viejo')

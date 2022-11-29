@@ -61,7 +61,9 @@ df_175luz_viejo = pd.read_csv(fname_t6)
 print(df_15luz.head(20))
 print(df_15luz.info())  # data types and general info
 #
-# ==== Part 2: Preprocessing the data
+
+# ==== Part 1: Preprocessing the data
+
 #
 data_mid = df_15luz.copy()
 data_left = df_125luz.copy()
@@ -71,6 +73,55 @@ data_mid_viejo = df_15luz_viejo.copy()
 data_left_viejo = df_125luz_viejo.copy()
 data_right_viejo = df_175luz_viejo.copy()
 
+labels=['Máximo valor (m/s2)=',round(np.max(data_mid['Linear Acceleration z (m/s^2)'][12000:60000],key=abs),3)]
+plt.figure(figsize=(15,8))
+plt.plot(data_mid['Time (s)'][12000:60000], data_mid['Linear Acceleration z (m/s^2)'][12000:60000],linewidth=0.7,label=labels)
+plt.xlabel('Time (s)')
+plt.ylabel('Linear Acceleration Z (m/s^2)')
+plt.legend()
+save_fig("original data_mid")
+
+labels=['Máximo valor (m/s2)=',round(np.max(data_left['Linear Acceleration z (m/s^2)'][12000:60000],key=abs),3)]
+plt.figure(figsize=(15,8))
+plt.plot(data_left['Time (s)'][12000:60000], data_left['Linear Acceleration z (m/s^2)'][12000:60000],linewidth=0.7,label=labels)
+plt.xlabel('Time (s)')
+plt.ylabel('Linear Acceleration Z (m/s^2)')
+plt.legend()
+save_fig("original data_left")
+
+labels=['Máximo valor (m/s2)=',round(np.max(data_right['Linear Acceleration z (m/s^2)'][12000:60000],key=abs),3)]
+plt.figure(figsize=(15,8))
+plt.plot(data_right['Time (s)'][12000:60000], data_right['Linear Acceleration z (m/s^2)'][12000:60000],linewidth=0.7,label=labels)
+plt.xlabel('Time (s)')
+plt.ylabel('Linear Acceleration Z (m/s^2)')
+plt.legend()
+save_fig("original data_right")
+
+labels=['Máximo valor (m/s2)=',round(np.max(data_mid_viejo['Linear Acceleration z (m/s^2)'][12000:60000],key=abs),3)]
+plt.figure(figsize=(15,8))
+plt.plot(data_mid_viejo['Time (s)'][12000:60000], data_mid_viejo['Linear Acceleration z (m/s^2)'][12000:60000],linewidth=0.7,label=labels)
+plt.xlabel('Time (s)')
+plt.ylabel('Linear Acceleration Z (m/s^2)')
+plt.legend()
+save_fig("original data_mid_viejo")
+
+labels=['Máximo valor (m/s2)=',round(np.max(data_left_viejo['Linear Acceleration z (m/s^2)'][12000:60000],key=abs),3)]
+plt.figure(figsize=(15,8))
+plt.plot(data_left_viejo['Time (s)'][12000:60000], data_left_viejo['Linear Acceleration z (m/s^2)'][12000:60000],linewidth=0.7,label=labels)
+plt.xlabel('Time (s)')
+plt.ylabel('Linear Acceleration Z (m/s^2)')
+plt.legend()
+save_fig("original data_left_viejo")
+
+labels=['Máximo valor (m/s2)=',round(np.max(data_right_viejo['Linear Acceleration z (m/s^2)'][12000:60000],key=abs),3)]
+plt.figure(figsize=(15,8))
+plt.plot(data_right_viejo['Time (s)'][12000:60000], data_right_viejo['Linear Acceleration z (m/s^2)'][12000:60000],linewidth=0.7,label=labels)
+plt.xlabel('Time (s)')
+plt.ylabel('Linear Acceleration Z (m/s^2)')
+plt.legend()
+save_fig("original data_right_viejo")
+
+# ==== Part 2: Transforming data
 import eqsig.single
 bf, sub_fig = plt.subplots()
 a = data_mid['Linear Acceleration z (m/s^2)'][12000:60000] #min 2 a min 10

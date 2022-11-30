@@ -197,6 +197,18 @@ adet2=signal.detrend (data_mid_viejo['Linear Acceleration z (m/s^2)'][12000:6000
 vdet2=integrate.cumtrapz(adet2, t, initial=0)
 ddet2=integrate.cumtrapz(vdet2, t, initial=0)
 
+adett=pd.DataFrame()
+adett['Aceleracion cm/seg2']=adet
+adett['Velocidad cm/vel']=vdet
+adett['Desplazamiento cm']=ddet
+adett.to_excel(".\\Salidas\\Acel_Puente1_medio.xlsx", index=False)
+
+adett=pd.DataFrame()
+adett['Aceleracion cm/seg2']=adet2
+adett['Velocidad cm/vel']=vdet2
+adett['Desplazamiento cm']=ddet2
+adett.to_excel(".\\Salidas\\Acel_Puente2_medio.xlsx", index=False)
+
 plt.figure()
 plt.figure(figsize=(15,8))
 plt.subplot (3,2,1);plt.title ('Corrección de línea base COMPONENTE Puente 1')
@@ -229,6 +241,18 @@ adet2=signal.detrend (data_left_viejo['Linear Acceleration z (m/s^2)'][12000:600
 vdet2=integrate.cumtrapz(adet2, t, initial=0)
 ddet2=integrate.cumtrapz(vdet2, t, initial=0)
 
+adett=pd.DataFrame()
+adett['Aceleracion cm/seg2']=adet
+adett['Velocidad cm/vel']=vdet
+adett['Desplazamiento cm']=ddet
+adett.to_excel(".\\Salidas\\Acel_Puente1_izquierda.xlsx", index=False)
+
+adett=pd.DataFrame()
+adett['Aceleracion cm/seg2']=adet2
+adett['Velocidad cm/vel']=vdet2
+adett['Desplazamiento cm']=ddet2
+adett.to_excel(".\\Salidas\\Acel_Puente2_izquierda.xlsx", index=False)
+
 plt.figure()
 plt.figure(figsize=(15,8))
 plt.subplot (3,2,1);plt.title ('Corrección de línea base COMPONENTE Puente 1')
@@ -260,6 +284,19 @@ ddet=integrate.cumtrapz (vdet, t, initial=0)
 adet2=signal.detrend (data_right_viejo['Linear Acceleration z (m/s^2)'][12000:60000])
 vdet2=integrate.cumtrapz(adet2, t, initial=0)
 ddet2=integrate.cumtrapz(vdet2, t, initial=0)
+
+adett=pd.DataFrame()
+adett['Aceleracion cm/seg2']=adet
+adett['Velocidad cm/vel']=vdet
+adett['Desplazamiento cm']=ddet
+adett.to_excel(".\\Salidas\\Acel_Puente1_derecha.xlsx", index=False)
+
+adett=pd.DataFrame()
+adett['Aceleracion cm/seg2']=adet2
+adett['Velocidad cm/vel']=vdet2
+adett['Desplazamiento cm']=ddet2
+adett.to_excel(".\\Salidas\\Acel_Puente2_derecha.xlsx", index=False)
+
 
 plt.figure()
 plt.figure(figsize=(15,8))

@@ -198,16 +198,18 @@ vdet2=integrate.cumtrapz(adet2, t, initial=0)
 ddet2=integrate.cumtrapz(vdet2, t, initial=0)
 
 adett=pd.DataFrame()
+adett['Tiempo (s)']=data_mid['Time (s)'][12000:60000]
 adett['Aceleracion cm/seg2']=adet
-adett['Velocidad cm/vel']=vdet
+adett['Velocidad cm/seg']=vdet
 adett['Desplazamiento cm']=ddet
 adett.to_excel(".\\Salidas\\Acel_Puente1_medio.xlsx", index=False)
 
-adett=pd.DataFrame()
-adett['Aceleracion cm/seg2']=adet2
-adett['Velocidad cm/vel']=vdet2
-adett['Desplazamiento cm']=ddet2
-adett.to_excel(".\\Salidas\\Acel_Puente2_medio.xlsx", index=False)
+adett_viejo=pd.DataFrame()
+adett_viejo['Tiempo (s)']=data_mid_viejo['Time (s)'][12000:60000]
+adett_viejo['Aceleracion cm/seg2']=adet2
+adett_viejo['Velocidad cm/seg']=vdet2
+adett_viejo['Desplazamiento cm']=ddet2
+adett_viejo.to_excel(".\\Salidas\\Acel_Puente2_medio.xlsx", index=False)
 
 plt.figure()
 plt.figure(figsize=(15,8))
@@ -243,13 +245,13 @@ ddet2=integrate.cumtrapz(vdet2, t, initial=0)
 
 adett=pd.DataFrame()
 adett['Aceleracion cm/seg2']=adet
-adett['Velocidad cm/vel']=vdet
+adett['Velocidad cm/seg']=vdet
 adett['Desplazamiento cm']=ddet
 adett.to_excel(".\\Salidas\\Acel_Puente1_izquierda.xlsx", index=False)
 
 adett=pd.DataFrame()
 adett['Aceleracion cm/seg2']=adet2
-adett['Velocidad cm/vel']=vdet2
+adett['Velocidad cm/seg']=vdet2
 adett['Desplazamiento cm']=ddet2
 adett.to_excel(".\\Salidas\\Acel_Puente2_izquierda.xlsx", index=False)
 
@@ -287,13 +289,13 @@ ddet2=integrate.cumtrapz(vdet2, t, initial=0)
 
 adett=pd.DataFrame()
 adett['Aceleracion cm/seg2']=adet
-adett['Velocidad cm/vel']=vdet
+adett['Velocidad cm/seg']=vdet
 adett['Desplazamiento cm']=ddet
 adett.to_excel(".\\Salidas\\Acel_Puente1_derecha.xlsx", index=False)
 
 adett=pd.DataFrame()
 adett['Aceleracion cm/seg2']=adet2
-adett['Velocidad cm/vel']=vdet2
+adett['Velocidad cm/seg']=vdet2
 adett['Desplazamiento cm']=ddet2
 adett.to_excel(".\\Salidas\\Acel_Puente2_derecha.xlsx", index=False)
 
@@ -321,3 +323,190 @@ plt.subplot (3,2,6);plt.plot(t,ddet2)
 plt.xlabel ('Tiempo(seg)')
 plt.ylabel ('Desplazamiento (cm)')
 save_fig("Acel_Vel_Desp_CORREGIDO_derecha")
+
+#=====================EXPLORATION WITH UNSUPERVISED LEARNIING METHODS
+from scipy.spatial.distance import cdist
+from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN
+from collections import Counter
+from sklearn.metrics import silhouette_samples, silhouette_score
+from yellowbrick.cluster import SilhouetteVisualizer
+from mpl_toolkits.mplot3d import Axes3D
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import SpectralClustering
+import plotly.graph_objects as go
+from sklearn.pipeline import make_pipeline
+import textwrap
+from sklearn import tree
+from sklearn.decomposition import PCA
+from collections import defaultdict
+from sklearn.metrics.pairwise import euclidean_distances
+
+distortions = []
+inertias = []
+mapping1 = {}
+mapping2 = {}
+K = range(1, 10)
+
+
+var_in=['Aceleracion cm/seg2','Velocidad cm/seg','Desplazamiento cm']
+data_mod=adett
+for k in K:
+    # Building and fitting the model
+    kmeanModel = KMeans(n_clusters=k).fit(data_mod[var_in])
+    kmeanModel.fit(data_mod[var_in])
+  
+    distortions.append(sum(np.min(cdist(data_mod[var_in], kmeanModel.cluster_centers_,
+                                        'euclidean'), axis=1)) / data_mod[var_in].shape[0])
+    inertias.append(kmeanModel.inertia_)
+  
+    mapping1[k] = sum(np.min(cdist(data_mod[var_in], kmeanModel.cluster_centers_,
+                                   'euclidean'), axis=1)) / data_mod[var_in].shape[0]
+    mapping2[k] = kmeanModel.inertia_
+
+for key, val in mapping1.items():
+    print(f'{key} : {val}')
+plt.figure(figsize=(10, 8))
+plt.plot(K, distortions, 'bx-')
+plt.xlabel('Values of K')
+plt.ylabel('Distortion')
+plt.title('The Elbow Method using Distortion')
+save_fig("elbow method")
+
+plt.figure(figsize=(10, 8))
+plt.plot(K, inertias, 'bx-')
+plt.xlabel('Values of K')
+plt.ylabel('Inertia')
+plt.title('The Elbow Method using Inertia')
+save_fig("elbow method_inertia")
+
+#Kmeans
+kmeans = KMeans(n_clusters=4).fit(data_mod[var_in])
+data_mod["cluster"] = kmeans.labels_
+data_mod['Time (s)']=data_mid['Time (s)'][12000:60000]
+kmeans.cluster_centers_
+
+colores = ["red", "blue", "orange", "black"]
+plt.figure(figsize=(10, 8))
+for cluster in range(kmeans.n_clusters):
+    plt.scatter(data_mod[data_mod["cluster"] == cluster]["Time (s)"],
+                data_mod[data_mod["cluster"] == cluster]["Velocidad cm/seg"],
+                marker="o", s=20, color=colores[cluster], alpha=0.5)
+    plt.scatter(kmeans.cluster_centers_[cluster][0], 
+                kmeans.cluster_centers_[cluster][1], 
+                marker="P", s=50, color=colores[cluster])
+plt.title("Puente 1 - MEDIO", fontsize=20)
+plt.xlabel("Tiempo (s)", fontsize=15)
+plt.ylabel("Velocidad cm/seg", fontsize=15)
+plt.text(1.15, 0.2, "K = %i" % kmeans.n_clusters, fontsize=25)
+#plt.text(1.15, 0, "Inercia = %0.2f" % kmeans.inertia_, fontsize=25)
+#plt.xlim(-0.1, 1.1)
+#plt.ylim(-0.1, 1.1)    
+save_fig("Kmeans_medio_P1_111")
+
+plt.figure()
+plt.figure(figsize = (20,15))
+plt.subplot (3,1,1);plt.title ('KMEANS PUENTE NUEVO - MEDIO')
+plt.scatter(data_mod[data_mod["cluster"] ==0]["Time (s)"],data_mod[data_mod["cluster"]==0]["Aceleracion cm/seg2"],s = 50, color=colores[0], label = "Cluster 1")
+plt.scatter(data_mod[data_mod["cluster"] ==1]["Time (s)"],data_mod[data_mod["cluster"]==1]["Aceleracion cm/seg2"],s = 50, color=colores[1], label = "Cluster 2")
+plt.scatter(data_mod[data_mod["cluster"] ==2]["Time (s)"],data_mod[data_mod["cluster"]==2]["Aceleracion cm/seg2"],s = 50, color=colores[2], label = "Cluster 3")
+plt.scatter(data_mod[data_mod["cluster"] ==3]["Time (s)"],data_mod[data_mod["cluster"]==3]["Aceleracion cm/seg2"],s = 50, color=colores[3], label = "Cluster 4")
+plt.scatter(kmeans.cluster_centers_[:,3],kmeans.cluster_centers_[:,17],marker="P", s = 150, color = colores, label = "centroids")
+plt.xlabel("Time (s)")
+plt.ylabel("Aceleracion cm/seg2")
+plt.legend()
+
+plt.subplot (3,1,2)
+plt.scatter(data_mod[data_mod["cluster"] ==0]["Time (s)"],data_mod[data_mod["cluster"]==0]["Velocidad cm/seg"],s = 50, color=colores[0], label = "Cluster 1")
+plt.scatter(data_mod[data_mod["cluster"] ==1]["Time (s)"],data_mod[data_mod["cluster"]==1]["Velocidad cm/seg"],s = 50, color=colores[1], label = "Cluster 2")
+plt.scatter(data_mod[data_mod["cluster"] ==2]["Time (s)"],data_mod[data_mod["cluster"]==2]["Velocidad cm/seg"],s = 50, color=colores[2], label = "Cluster 3")
+plt.scatter(data_mod[data_mod["cluster"] ==3]["Time (s)"],data_mod[data_mod["cluster"]==3]["Velocidad cm/seg"],s = 50, color=colores[3], label = "Cluster 4")
+plt.scatter(kmeans.cluster_centers_[:,3],kmeans.cluster_centers_[:,17],marker="P", s = 150, color = colores, label = "centroids")
+plt.xlabel("Time (s)")
+plt.ylabel("Velocidad cm/seg")
+
+plt.subplot (3,1,3)
+plt.scatter(data_mod[data_mod["cluster"] ==0]["Time (s)"],data_mod[data_mod["cluster"]==0]["Desplazamiento cm"],s = 50, color=colores[0], label = "Cluster 1")
+plt.scatter(data_mod[data_mod["cluster"] ==1]["Time (s)"],data_mod[data_mod["cluster"]==1]["Desplazamiento cm"],s = 50, color=colores[1], label = "Cluster 2")
+plt.scatter(data_mod[data_mod["cluster"] ==2]["Time (s)"],data_mod[data_mod["cluster"]==2]["Desplazamiento cm"],s = 50, color=colores[2], label = "Cluster 3")
+plt.scatter(data_mod[data_mod["cluster"] ==3]["Time (s)"],data_mod[data_mod["cluster"]==3]["Desplazamiento cm"],s = 50, color=colores[3], label = "Cluster 4")
+plt.scatter(kmeans.cluster_centers_[:,3],kmeans.cluster_centers_[:,17],marker="P", s = 150, color = colores, label = "centroids")
+plt.xlabel("Time (s)")
+plt.ylabel("Desplazamiento cm")
+save_fig("Kmeans_P1_medio")
+
+plt.figure()
+plt.figure(figsize = (20,10))
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+x = np.array(data_mod['Desplazamiento cm'])
+y = np.array(data_mod['Velocidad cm/seg'])
+z = np.array(data_mod['Aceleracion cm/seg2'])
+ax.scatter(data_mod[data_mod["cluster"] ==0]["Desplazamiento cm"],data_mod[data_mod["cluster"] ==0]["Velocidad cm/seg"],data_mod[data_mod["cluster"]==0]["Aceleracion cm/seg2"], s=20, color=colores[0], label = "Cluster 1")
+ax.scatter(data_mod[data_mod["cluster"] ==1]["Desplazamiento cm"],data_mod[data_mod["cluster"] ==1]["Velocidad cm/seg"],data_mod[data_mod["cluster"]==1]["Aceleracion cm/seg2"], s=20, color=colores[1], label = "Cluster 2")
+ax.scatter(data_mod[data_mod["cluster"] ==2]["Desplazamiento cm"],data_mod[data_mod["cluster"] ==2]["Velocidad cm/seg"],data_mod[data_mod["cluster"]==2]["Aceleracion cm/seg2"], s=20, color=colores[2], label = "Cluster 3")
+ax.scatter(data_mod[data_mod["cluster"] ==3]["Desplazamiento cm"],data_mod[data_mod["cluster"] ==3]["Velocidad cm/seg"],data_mod[data_mod["cluster"]==3]["Aceleracion cm/seg2"], s=20, color=colores[3], label = "Cluster 4")
+ax.scatter(kmeans.cluster_centers_[:,9],kmeans.cluster_centers_[:,3],kmeans.cluster_centers_[:,17],marker="P", s = 50, color = colores, label = "centroids")
+plt.xlabel("Desplazamiento cm")
+plt.ylabel("Velocidad cm/seg")
+plt.zlabel("Aceleracion cm/seg2")
+plt.legend()
+plt.show()
+save_fig("3D_clustering_Kmeans_P1_medio")
+
+###==
+data_mod2=adett_viejo
+kmeans2 = KMeans(n_clusters=4).fit(data_mod2[var_in])
+data_mod2["cluster"] = kmeans2.labels_
+data_mod2['Time (s)']=data_mid_viejo['Time (s)'][12000:60000]
+kmeans2.cluster_centers_
+colores = ["red", "blue", "orange", "black"]
+plt.figure()
+plt.figure(figsize = (20,15))
+plt.subplot (3,1,1);plt.title ('KMEANS PUENTE VIEJO - MEDIO')
+plt.scatter(data_mod2[data_mod2["cluster"] ==0]["Time (s)"],data_mod2[data_mod2["cluster"]==0]["Aceleracion cm/seg2"],s = 50, color=colores[0], label = "Cluster 1")
+plt.scatter(data_mod2[data_mod2["cluster"] ==1]["Time (s)"],data_mod2[data_mod2["cluster"]==1]["Aceleracion cm/seg2"],s = 50, color=colores[1], label = "Cluster 2")
+plt.scatter(data_mod2[data_mod2["cluster"] ==2]["Time (s)"],data_mod2[data_mod2["cluster"]==2]["Aceleracion cm/seg2"],s = 50, color=colores[2], label = "Cluster 3")
+plt.scatter(data_mod2[data_mod2["cluster"] ==3]["Time (s)"],data_mod2[data_mod2["cluster"]==3]["Aceleracion cm/seg2"],s = 50, color=colores[3], label = "Cluster 4")
+plt.scatter(kmeans2.cluster_centers_[:,3],kmeans2.cluster_centers_[:,17],marker="P", s = 150, color = colores, label = "centroids")
+plt.xlabel("Time (s)")
+plt.ylabel("Aceleracion cm/seg2")
+plt.legend()
+
+plt.subplot (3,1,2)
+plt.scatter(data_mod2[data_mod2["cluster"] ==0]["Time (s)"],data_mod2[data_mod2["cluster"]==0]["Velocidad cm/seg"],s = 50, color=colores[0], label = "Cluster 1")
+plt.scatter(data_mod2[data_mod2["cluster"] ==1]["Time (s)"],data_mod2[data_mod2["cluster"]==1]["Velocidad cm/seg"],s = 50, color=colores[1], label = "Cluster 2")
+plt.scatter(data_mod2[data_mod2["cluster"] ==2]["Time (s)"],data_mod2[data_mod2["cluster"]==2]["Velocidad cm/seg"],s = 50, color=colores[2], label = "Cluster 3")
+plt.scatter(data_mod2[data_mod2["cluster"] ==3]["Time (s)"],data_mod2[data_mod2["cluster"]==3]["Velocidad cm/seg"],s = 50, color=colores[3], label = "Cluster 4")
+plt.scatter(kmeans2.cluster_centers_[:,3],kmeans2.cluster_centers_[:,17],marker="P", s = 150, color = colores, label = "centroids")
+plt.xlabel("Time (s)")
+plt.ylabel("Velocidad cm/seg")
+
+plt.subplot (3,1,3)
+plt.scatter(data_mod2[data_mod2["cluster"] ==0]["Time (s)"],data_mod2[data_mod2["cluster"]==0]["Desplazamiento cm"],s = 50, color=colores[0], label = "Cluster 1")
+plt.scatter(data_mod2[data_mod2["cluster"] ==1]["Time (s)"],data_mod2[data_mod2["cluster"]==1]["Desplazamiento cm"],s = 50, color=colores[1], label = "Cluster 2")
+plt.scatter(data_mod2[data_mod2["cluster"] ==2]["Time (s)"],data_mod2[data_mod2["cluster"]==2]["Desplazamiento cm"],s = 50, color=colores[2], label = "Cluster 3")
+plt.scatter(data_mod2[data_mod2["cluster"] ==3]["Time (s)"],data_mod2[data_mod2["cluster"]==3]["Desplazamiento cm"],s = 50, color=colores[3], label = "Cluster 4")
+plt.scatter(kmeans2.cluster_centers_[:,3],kmeans2.cluster_centers_[:,17],marker="P", s = 150, color = colores, label = "centroids")
+plt.xlabel("Time (s)")
+plt.ylabel("Desplazamiento cm")
+save_fig("Kmeans_P2_medio")
+
+plt.figure()
+plt.figure(figsize = (20,10))
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+x = np.array(data_mod2['Desplazamiento cm'])
+y = np.array(data_mod2['Velocidad cm/seg'])
+z = np.array(data_mod2['Aceleracion cm/seg2'])
+ax.scatter(data_mod2[data_mod2["cluster"] ==0]["Desplazamiento cm"],data_mod2[data_mod2["cluster"] ==0]["Velocidad cm/seg"],data_mod2[data_mod2["cluster"]==0]["Aceleracion cm/seg2"], s=20, color=colores[0], label = "Cluster 1")
+ax.scatter(data_mod2[data_mod2["cluster"] ==1]["Desplazamiento cm"],data_mod2[data_mod2["cluster"] ==1]["Velocidad cm/seg"],data_mod2[data_mod2["cluster"]==1]["Aceleracion cm/seg2"], s=20, color=colores[1], label = "Cluster 2")
+ax.scatter(data_mod2[data_mod2["cluster"] ==2]["Desplazamiento cm"],data_mod2[data_mod2["cluster"] ==2]["Velocidad cm/seg"],data_mod2[data_mod2["cluster"]==2]["Aceleracion cm/seg2"], s=20, color=colores[2], label = "Cluster 3")
+ax.scatter(data_mod2[data_mod2["cluster"] ==3]["Desplazamiento cm"],data_mod2[data_mod2["cluster"] ==3]["Velocidad cm/seg"],data_mod2[data_mod2["cluster"]==3]["Aceleracion cm/seg2"], s=20, color=colores[3], label = "Cluster 4")
+ax.scatter(kmeans2.cluster_centers_[:,9],kmeans2.cluster_centers_[:,3],kmeans2.cluster_centers_[:,17],marker="P", s = 50, color = colores, label = "centroids")
+plt.xlabel("Desplazamiento cm")
+plt.ylabel("Velocidad cm/seg")
+plt.zlabel("Aceleracion cm/seg2")
+plt.legend()
+save_fig("3D_clustering_Kmeans_P2_medio")

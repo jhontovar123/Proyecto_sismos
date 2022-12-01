@@ -164,28 +164,6 @@ plt.xlabel ('tiempo (seg)')
 plt.ylabel ('Desplazamiento (cm)')
 save_fig("Acel_Vel_Desp_derecha")
 
-n=len(t)
-fr=(fm/2) * np.linspace (0,1, n//2)
-x1=np.fft.fft(data_mid['Linear Acceleration z (m/s^2)'][12000:14000], n)
-xm1=x1* np.conjugate (x1) /n
-x_m1=xm1 [0: np.size (fr)]
-x2=np.fft.fft (data_mid_viejo['Linear Acceleration z (m/s^2)'][12000:14000], n)
-xm2=x2 * np.conjugate (x2) /n
-x_m2=xm2 [0: np.size (fr)]
-
-plt.figure()
-plt.figure(figsize=(15,8))
-plt.subplot (1,2,1); plt.plot (fr, x_m1)
-plt.title ('SIN TRATAMIENTO COMPONENTE PN')
-plt.xlabel ('Frecuencia (Hz)')
-plt.ylabel ('Magnitud')
-plt.subplot (1,2,2); plt.plot (fr,x_m2)
-plt.title ('SIN TRATAMIENTO COMPONENTE PV')
-plt.xlabel ('Frecuencia (Hz)')
-plt.ylabel ('Magnitud')
-save_fig("pruebitaaaaas data_mid222")
-
-
 
 #con tratamiento
 #Corregir línea base
@@ -243,16 +221,18 @@ adet2=signal.detrend (data_left_viejo['Linear Acceleration z (m/s^2)'][12000:600
 vdet2=integrate.cumtrapz(adet2, t, initial=0)
 ddet2=integrate.cumtrapz(vdet2, t, initial=0)
 
-adett=pd.DataFrame()
-adett['Aceleracion cm/seg2']=adet
-adett['Velocidad cm/seg']=vdet
-adett['Desplazamiento cm']=ddet
+adett_izquierda=pd.DataFrame()
+adett_izquierda['Tiempo (s)']=data_left['Time (s)'][12000:60000]
+adett_izquierda['Aceleracion cm/seg2']=adet
+adett_izquierda['Velocidad cm/seg']=vdet
+adett_izquierda['Desplazamiento cm']=ddet
 adett.to_excel(".\\Salidas\\Acel_Puente1_izquierda.xlsx", index=False)
 
-adett=pd.DataFrame()
-adett['Aceleracion cm/seg2']=adet2
-adett['Velocidad cm/seg']=vdet2
-adett['Desplazamiento cm']=ddet2
+adett_izquierda_viejo=pd.DataFrame()
+adett_izquierda['Tiempo (s)']=data_left_viejo['Time (s)'][12000:60000]
+adett_izquierda_viejo['Aceleracion cm/seg2']=adet2
+adett_izquierda_viejo['Velocidad cm/seg']=vdet2
+adett_izquierda_viejo['Desplazamiento cm']=ddet2
 adett.to_excel(".\\Salidas\\Acel_Puente2_izquierda.xlsx", index=False)
 
 plt.figure()
@@ -287,18 +267,19 @@ adet2=signal.detrend (data_right_viejo['Linear Acceleration z (m/s^2)'][12000:60
 vdet2=integrate.cumtrapz(adet2, t, initial=0)
 ddet2=integrate.cumtrapz(vdet2, t, initial=0)
 
-adett=pd.DataFrame()
-adett['Aceleracion cm/seg2']=adet
-adett['Velocidad cm/seg']=vdet
-adett['Desplazamiento cm']=ddet
-adett.to_excel(".\\Salidas\\Acel_Puente1_derecha.xlsx", index=False)
+adett_derecha=pd.DataFrame()
+adett_derecha['Tiempo (s)']=data_right['Time (s)'][12000:60000]
+adett_derecha['Aceleracion cm/seg2']=adet
+adett_derecha['Velocidad cm/seg']=vdet
+adett_derecha['Desplazamiento cm']=ddet
+adett_derecha.to_excel(".\\Salidas\\Acel_Puente1_derecha.xlsx", index=False)
 
-adett=pd.DataFrame()
-adett['Aceleracion cm/seg2']=adet2
-adett['Velocidad cm/seg']=vdet2
-adett['Desplazamiento cm']=ddet2
-adett.to_excel(".\\Salidas\\Acel_Puente2_derecha.xlsx", index=False)
-
+adett_derecha_viejo=pd.DataFrame()
+adett_derecha_viejo['Tiempo (s)']=data_right_viejo['Time (s)'][12000:60000]
+adett_derecha_viejo['Aceleracion cm/seg2']=adet2
+adett_derecha_viejo['Velocidad cm/seg']=vdet2
+adett_derecha_viejo['Desplazamiento cm']=ddet2
+adett_derecha_viejo.to_excel(".\\Salidas\\Acel_Puente2_derecha.xlsx", index=False)
 
 plt.figure()
 plt.figure(figsize=(15,8))
@@ -323,6 +304,86 @@ plt.subplot (3,2,6);plt.plot(t,ddet2)
 plt.xlabel ('Tiempo(seg)')
 plt.ylabel ('Desplazamiento (cm)')
 save_fig("Acel_Vel_Desp_CORREGIDO_derecha")
+
+n=len(t)
+fr=(fm/2) * np.linspace (0,1, n//2)
+x1=np.fft.fft(adett['Aceleracion cm/seg2'], n)
+xm1=x1* np.conjugate (x1)/n
+x_m1=xm1 [0: np.size (fr)]
+x2=np.fft.fft (adett_viejo['Aceleracion cm/seg2'], n)
+xm2=x2 * np.conjugate (x2)/n
+x_m2=xm2 [0: np.size (fr)]
+
+#DE 0-20 SEG
+a0_5=adett['Aceleracion cm/seg2'][1:2001]
+n0_5=np.size(a0_5)
+fr1=(fm/2)*np.linspace(0,1,n0_5/2)
+x0_5=np.fft.fft(a0_5,n0_5)
+xm0_5=x0_5*np.conjugate(x0_5)/n0_5
+x_m0_5=xm0_5[0:np.size(fr1)]
+x_m0_5=x_m0_5/max(xm1)
+aa0_5=adett_viejo['Aceleracion cm/seg2'][1:2001]
+nn0_5=np.size(aa0_5)
+xx0_5=np.fft.fft(aa0_5,nn0_5)
+xxm0_5=xx0_5*np.conjugate(xx0_5)/nn0_5
+xx_m0_5=xxm0_5[0:np.size(fr1)]
+xx_m0_5=xx_m0_5/max(xm2)
+
+#DE 20-40 SEG
+a5_10=adett['Aceleracion cm/seg2'][2001:4001]
+n5_10=np.size(a5_10)
+x5_10=np.fft.fft(a5_10,n5_10)
+xm5_10=x5_10*np.conjugate(x5_10)/n5_10
+x_m5_10=xm5_10[0:np.size(fr1)]
+x_m5_10=x_m5_10/max(xm1)
+aa5_10=adett_viejo['Aceleracion cm/seg2'][2001:4001]
+nn5_10=np.size(aa5_10)
+xx5_10=np.fft.fft(aa5_10,nn5_10)
+xxm5_10=xx5_10*np.conjugate(xx5_10)/nn5_10
+xx_m5_10=xxm5_10[0:np.size(fr1)]
+xx_m5_10=xx_m5_10/max(xm2)
+#DE 40-60 SEG
+a10_15=adett['Aceleracion cm/seg2'][4001:6001]
+n10_15=np.size(a10_15)
+x10_15=np.fft.fft(a10_15,n10_15)
+xm10_15=x10_15*np.conjugate(x10_15)/n10_15
+x_m10_15=xm10_15[0:np.size(fr1)]
+x_m10_15=x_m10_15/max(xm1)
+aa10_15=adett_viejo['Aceleracion cm/seg2'][4001:6001]
+nn10_15=np.size(aa10_15)
+xx10_15=np.fft.fft(aa10_15,nn10_15)
+xxm10_15=xx10_15*np.conjugate(xx10_15)/nn10_15
+xx_m10_15=xxm10_15[0:np.size(fr1)]
+xx_m10_15=xx_m10_15/max(xm2)
+
+plt.figure()
+plt.figure(figsize=(15,8))
+plt.subplot(3,2,1)
+plt.plot(fr1,x_m0_5,label="0-20 seg");plt.title('COMPONENTE Puente 1')
+plt.ylim(ymax=0.4)
+plt.legend(loc="upper right");plt.xlabel('Frecuencia');plt.ylabel('Magnitud')
+plt.subplot(3,2,2)
+plt.plot(fr1,xx_m0_5,label="0-20 seg");plt.title('COMPONENTE Puente 2')
+plt.ylim(ymax=0.4)
+plt.legend(loc="upper right");plt.xlabel('Frecuencia');plt.ylabel('Magnitud')
+plt.subplot(3,2,3)
+plt.plot(fr1,x_m5_10,label="20-40 seg")
+plt.ylim(ymax=0.4)
+plt.legend(loc="upper right");plt.xlabel('Frecuencia');plt.ylabel('Magnitud')
+plt.subplot(3,2,4)
+plt.plot(fr1,xx_m5_10,label="20-40 seg")
+plt.ylim(ymax=0.4)
+plt.legend(loc="upper right");plt.xlabel('Frecuencia');plt.ylabel('Magnitud')
+plt.subplot(3,2,5)
+plt.plot(fr1,x_m10_15,label="40-60 seg")
+plt.ylim(ymax=0.4)
+plt.legend(loc="upper right");plt.xlabel('Frecuencia');plt.ylabel('Magnitud')
+plt.subplot(3,2,6)
+plt.plot(fr1,xx_m10_15,label="40-60 seg")
+plt.ylim(ymax=0.4)
+plt.legend(loc="upper right");plt.xlabel('Frecuencia');plt.ylabel('Magnitud')
+save_fig("Espectro de Fourier_20seg_medio")
+
 
 #=====================EXPLORATION WITH UNSUPERVISED LEARNIING METHODS
 from scipy.spatial.distance import cdist
@@ -456,7 +517,15 @@ plt.show()
 save_fig("3D_clustering_Kmeans_P1_medio")
 
 ###==
-data_mod2=adett_viejo
+data_mod2=pd.DataFrame()
+data_mod2=data_mod2.append(adett)
+data_mod2=data_mod2.append(adett_viejo)
+data_mod2=data_mod2.append(adett_izquierda)
+data_mod2=data_mod2.append(adett_izquierda_viejo)
+data_mod2=data_mod2.append(adett_derecha)
+data_mod2=data_mod2.append(adett_derecha_viejo)
+var_in=['Tiempo (s)','Aceleracion cm/seg2','Velocidad cm/seg','Desplazamiento cm']
+
 kmeans2 = KMeans(n_clusters=4).fit(data_mod2[var_in])
 data_mod2["cluster"] = kmeans2.labels_
 data_mod2['Time (s)']=data_mid_viejo['Time (s)'][12000:60000]
@@ -491,7 +560,7 @@ plt.scatter(data_mod2[data_mod2["cluster"] ==3]["Time (s)"],data_mod2[data_mod2[
 plt.scatter(kmeans2.cluster_centers_[:,3],kmeans2.cluster_centers_[:,17],marker="P", s = 150, color = colores, label = "centroids")
 plt.xlabel("Time (s)")
 plt.ylabel("Desplazamiento cm")
-save_fig("Kmeans_P2_medio")
+save_fig("Kmeans_P2_medio2")
 
 plt.figure()
 plt.figure(figsize = (20,10))
